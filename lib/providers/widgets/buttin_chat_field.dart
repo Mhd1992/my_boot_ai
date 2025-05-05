@@ -4,7 +4,8 @@ import 'package:my_boot_ai/providers/chat_provider.dart';
 class ButtonChatField extends StatefulWidget {
   ButtonChatField({required this.chatProvider, super.key});
 
-  final ChatProvider chatProvider;
+  // final ChatProvider chatProvider;
+  final ChangeNotifier chatProvider;
 
   @override
   State<ButtonChatField> createState() => _ButtonChatFieldState();

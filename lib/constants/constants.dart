@@ -3,5 +3,7 @@ class Constants {
   static const String usersBox = 'users';
   static const String settingsBox = 'settings';
 
-  static const String geminiDb = 'gemini_db';
+  static const String chatMessageBox = 'chat_message_';
+
+  static const String geminiDb = 'gemini.db';
 }
