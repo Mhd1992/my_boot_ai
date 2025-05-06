@@ -36,8 +36,8 @@ class MessageModel {
     };
   }
 
-  MessageModel copyWith(String? messageId, String? chatId, Role? role,
-      StringBuffer? message, DateTime? timeSent, List<String>? imagesUrl) {
+  MessageModel copyWith({String? messageId, String? chatId, Role? role,
+  StringBuffer? message, DateTime? timeSent, List<String>? imagesUrl}) {
     return MessageModel(
         messageId: messageId ?? this.messageId,
         chatId: chatId ?? this.chatId,

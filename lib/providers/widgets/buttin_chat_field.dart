@@ -1,11 +1,14 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:my_boot_ai/providers/chat_provider.dart';
 
 class ButtonChatField extends StatefulWidget {
   ButtonChatField({required this.chatProvider, super.key});
 
-  // final ChatProvider chatProvider;
-  final ChangeNotifier chatProvider;
+  final ChatProvider chatProvider;
+
+  // final ChangeNotifier chatProvider;
 
   @override
   State<ButtonChatField> createState() => _ButtonChatFieldState();
@@ -20,6 +23,20 @@ class _ButtonChatFieldState extends State<ButtonChatField> {
     focusNode.dispose();
     controller.dispose();
     super.dispose();
+  }
+
+  Future<void> sendMessage(
+      {required String message,
+      required ChatProvider chatProvider,
+      required bool isTextOnly}) async {
+    try {
+      await chatProvider.sendMessage(message: message, isTextOnly: isTextOnly);
+    } catch (e) {
+      log('Error : $e');
+    } finally {
+      controller.clear();
+      focusNode.unfocus();
+    }
   }
 
   @override
@@ -43,6 +60,14 @@ class _ButtonChatFieldState extends State<ButtonChatField> {
               child: TextField(
                 focusNode: focusNode,
                 controller: controller,
+                onSubmitted: (String value) {
+                  if (value.isNotEmpty) {
+                    sendMessage(
+                        message: controller.text,
+                        chatProvider: widget.chatProvider,
+                        isTextOnly: true);
+                  }
+                },
                 decoration: InputDecoration.collapsed(
                   hintText: 'enter promb',
                   border: OutlineInputBorder(
@@ -53,7 +78,14 @@ class _ButtonChatFieldState extends State<ButtonChatField> {
               ),
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                if (controller.text.isNotEmpty) {
+                  sendMessage(
+                      message: controller.text,
+                      chatProvider: widget.chatProvider,
+                      isTextOnly: true);
+                }
+              },
               child: Container(
                 decoration: BoxDecoration(
                     color: Colors.deepPurple,

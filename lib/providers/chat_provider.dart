@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:hive/hive.dart';
@@ -84,7 +85,7 @@ class ChatProvider extends ChangeNotifier {
     final messageData = await loadMessageDB(chatId: chatId);
     /*   messageData.forEach((e) {
       if (_inMessageChat.contains(e)) {
-        log('this message already existed');
+          log('this message already existed');
 
       }else{
         _inMessageChat.add(e);
@@ -228,11 +229,65 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
     return newData;
   }
-}
 
-sendMessageAndReceiveResponse(
-    {required String message,
-    required String chatId,
-    required List<Content> history,
-    required bool isTextOnly,
-    required MessageModel userModel}) {}
+  Future<void> sendMessageAndReceiveResponse(
+      {required String message,
+      required String chatId,
+      required List<Content> history,
+      required bool isTextOnly,
+      required MessageModel userModel}) async {
+    final chatSession = _generativeModel!.startChat(
+      history: (history.isEmpty || !isTextOnly) ? null : history,
+    );
+
+    final content = await getContent(message: message, isTextOnly: isTextOnly);
+
+    final assistantMessage = userModel.copyWith(
+      messageId: '',
+        message: StringBuffer(),
+        role: Role.assistant,
+        timeSent: DateTime.now());
+
+    _inMessageChat.add(assistantMessage);
+    notifyListeners();
+    ///wait for stream response
+
+    chatSession.sendMessageStream(content).asyncMap((event){
+      return event;
+
+    }).listen((event){
+      _inMessageChat.firstWhere((element) => element.messageId == assistantMessage.messageId && element.role == Role.assistant).message.write(event.text);
+
+      notifyListeners();
+    },onDone: (){
+      ///save message in HiveDataBase
+
+
+      ///setLoading false
+     setLoading(value: false);
+    }).onError((error,stackTrace){
+
+
+      setLoading(value: false);
+
+    });
+
+  }
+
+  Future<Content> getContent(
+      {required String message, required bool isTextOnly}) async {
+    if (isTextOnly) {
+      return Content.text(message);
+    } else {
+      final featureImage = _imageFileList
+          ?.map((imageFile) => imageFile.readAsBytes())
+          .toList(growable: false);
+      final imageByte = await Future.wait(featureImage!);
+      final prompt = TextPart(message);
+      final imageParts = imageByte
+          .map((bytes) => DataPart('image/jpg', Uint8List.fromList(bytes)))
+          .toList();
+      return Content.model([prompt, ...imageParts]);
+    }
+  }
+}
