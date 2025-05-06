@@ -12,6 +12,8 @@ import 'package:my_boot_ai/service/api_service.dart';
 import 'package:path_provider/path_provider.dart' as path;
 import 'package:image_picker/image_picker.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:uuid/uuid.dart';
+import 'package:uuid/v4.dart';
 
 class ChatProvider extends ChangeNotifier {
   List<MessageModel> _inMessageChat = [];
@@ -46,7 +48,7 @@ class ChatProvider extends ChangeNotifier {
 
   int get currentIndex => _currentIndex;
 
-  String get chatId => _chatId;
+  String get currentChatId => _chatId;
 
   String get modeType => _modeType;
 
@@ -143,6 +145,75 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> sendMessage(
+      {required String message, required bool isTextOnly}) async {
+    await setModel(isTextOnly: isTextOnly);
+
+    setLoading(value: true);
+
+    String chatId = getChatId();
+
+    List<Content> history = [];
+
+    history = await getHistory(chatId: chatId);
+
+    List<String> imagesUrl = await getImagesUrl(isTextOnly: isTextOnly);
+
+    final userModel = MessageModel(
+        messageId: '',
+        chatId: chatId,
+        role: Role.user,
+        message: StringBuffer(message),
+        timeSent: DateTime.now(),
+        imagesUrl: imagesUrl);
+    _inMessageChat.add(userModel);
+    notifyListeners();
+    if (currentChatId.isEmpty) setCurrentChatId(chatId: chatId);
+
+    await sendMessageAndReceiveResponse(
+        message: message,
+        chatId: chatId,
+        history: history,
+        isTextOnly: isTextOnly,
+        userModel: userModel);
+  }
+
+  String getChatId() {
+    if (currentChatId.isEmpty) {
+      //_chatId = Uuid().v4().toString();
+      return Uuid().v4().toString();
+    } else {
+      return currentChatId;
+    }
+  }
+
+  Future<List<Content>> getHistory({required chatId}) async {
+    List<Content> history = [];
+    if (currentChatId.isNotEmpty) {
+      await setInChatMessage(chatId: chatId);
+
+      for (var message in inMessageChat) {
+        if (message.role == Role.user) {
+          history.add(Content.text(message.message.toString()));
+        } else {
+          history.add(Content.model([TextPart(message.message.toString())]));
+        }
+      }
+    }
+
+    return history;
+  }
+
+  List<String> getImagesUrl({required bool isTextOnly}) {
+    List<String> imagesUrl = [];
+    if (!isTextOnly && imagesUrl != null) {
+      for (var image in imageFileList) {
+        imagesUrl.add(image.path);
+      }
+    }
+    return imagesUrl;
+  }
+
   Future<List<MessageModel>> loadMessageDB({required String chatId}) async {
     //  await Hive.openBox(Constants.chatMessageBox + chatId);
     await Hive.openBox("${Constants.chatMessageBox}$chatId");
@@ -158,3 +229,10 @@ class ChatProvider extends ChangeNotifier {
     return newData;
   }
 }
+
+sendMessageAndReceiveResponse(
+    {required String message,
+    required String chatId,
+    required List<Content> history,
+    required bool isTextOnly,
+    required MessageModel userModel}) {}
