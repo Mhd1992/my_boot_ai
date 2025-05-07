@@ -31,7 +31,8 @@ class ChatProvider extends ChangeNotifier {
   GenerativeModel? _generativeTextModel;
   GenerativeModel? _generativeVisionModel;
 
-  String _modeType = 'gemini-pro';
+  // String _modeType = 'gemini-pro';
+  String _modeType = 'gemini-1.5-pro';
 
   bool _isLoading = false;
 
@@ -120,7 +121,7 @@ class ChatProvider extends ChangeNotifier {
     if (isTextOnly) {
       _generativeModel = _generativeTextModel ??
           GenerativeModel(
-              model: setCurrentModel(newModel: 'gemini-pro'),
+              model: setCurrentModel(newModel: 'gemini-2.0-flash-lite'),
               apiKey: ApiService().apiKey);
     } else {
       _generativeModel = _generativeVisionModel ??
@@ -243,35 +244,36 @@ class ChatProvider extends ChangeNotifier {
     final content = await getContent(message: message, isTextOnly: isTextOnly);
 
     final assistantMessage = userModel.copyWith(
-      messageId: '',
+        messageId: '',
         message: StringBuffer(),
         role: Role.assistant,
         timeSent: DateTime.now());
 
     _inMessageChat.add(assistantMessage);
     notifyListeners();
+
     ///wait for stream response
 
-    chatSession.sendMessageStream(content).asyncMap((event){
+    chatSession.sendMessageStream(content).asyncMap((event) {
       return event;
-
-    }).listen((event){
-      _inMessageChat.firstWhere((element) => element.messageId == assistantMessage.messageId && element.role == Role.assistant).message.write(event.text);
+    }).listen((event) {
+      _inMessageChat
+          .firstWhere((element) =>
+              element.messageId == assistantMessage.messageId &&
+              element.role == Role.assistant)
+          .message
+          .write(event.text);
 
       notifyListeners();
-    },onDone: (){
+    }, onDone: () {
       ///save message in HiveDataBase
 
-
       ///setLoading false
-     setLoading(value: false);
-    }).onError((error,stackTrace){
-
-
       setLoading(value: false);
-
+    }).onError((error, stackTrace) {
+      print("----->>>>>>>${error.toString()}");
+      setLoading(value: false);
     });
-
   }
 
   Future<Content> getContent(
