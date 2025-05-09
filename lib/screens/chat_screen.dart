@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:my_boot_ai/models/message_model.dart';
 import 'package:my_boot_ai/providers/chat_provider.dart';
+import 'package:my_boot_ai/providers/widgets/assistant_message_widget.dart';
 import 'package:my_boot_ai/providers/widgets/buttin_chat_field.dart';
+import 'package:my_boot_ai/providers/widgets/my_message_widget.dart';
 import 'package:provider/provider.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -30,15 +33,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Expanded(
                     child: (chatProvider.inMessageChat.isEmpty)
-                        ? Center(child: Text('no message yet ...'))
+                        ? Center(child: Text('No Message'))
                         : ListView.builder(
                             itemBuilder: (context, index) {
                               final message = chatProvider.inMessageChat[index];
-                              return ListTile(
-                                title: Text(
-                                  message.message.toString(),
-                                ),
-                              );
+                              return message.role == Role.user
+                                  ? MyMessageWidget(message)
+                                  : AssistantMessageWidget(message);
                             },
                             itemCount: chatProvider.inMessageChat.length,
                           ),

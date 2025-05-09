@@ -161,6 +161,8 @@ class ChatProvider extends ChangeNotifier {
 
     List<String> imagesUrl = await getImagesUrl(isTextOnly: isTextOnly);
 
+    final userMessageId = const Uuid().v4();
+
     final userModel = MessageModel(
         messageId: '',
         chatId: chatId,
@@ -243,8 +245,10 @@ class ChatProvider extends ChangeNotifier {
 
     final content = await getContent(message: message, isTextOnly: isTextOnly);
 
+    final modelMessageId = const Uuid().v4();
+
     final assistantMessage = userModel.copyWith(
-        messageId: '',
+        messageId: modelMessageId,
         message: StringBuffer(),
         role: Role.assistant,
         timeSent: DateTime.now());
@@ -260,7 +264,7 @@ class ChatProvider extends ChangeNotifier {
       _inMessageChat
           .firstWhere((element) =>
               element.messageId == assistantMessage.messageId &&
-              element.role == Role.assistant)
+              element.role.name == Role.assistant.name)
           .message
           .write(event.text);
 
