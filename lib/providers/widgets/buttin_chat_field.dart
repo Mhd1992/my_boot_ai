@@ -69,7 +69,7 @@ class _ButtonChatFieldState extends State<ButtonChatField> {
                   }
                 },
                 decoration: InputDecoration.collapsed(
-                  hintText: 'enter promb',
+                  hintText: 'Enter Message',
                   border: OutlineInputBorder(
                     borderSide: BorderSide.none,
                     borderRadius: BorderRadius.circular(20),
